@@ -596,8 +596,9 @@ def maximal_record(codec: int, seq: int = 0) -> bytes:
 
 def run_device(host: str, port: int, imei: str, count: int, codec: int,
                batch: int, delay: float, scenario: str,
-               verbose: bool = True) -> bool:
+               verbose: bool = True, forever: bool = False) -> bool:
     ok = True
+    sent = 0
     sim = VehicleSimulator(imei)
 
     if scenario in PHASES:
@@ -612,11 +613,12 @@ def run_device(host: str, port: int, imei: str, count: int, codec: int,
                 print(f"[{imei}] handshake rejected: {reply!r}", file=sys.stderr)
                 return False
             if verbose:
-                print(f"[{imei}] handshake accepted")
+                print(f"[{imei}] handshake accepted"
+                      + (" (forever mode, Ctrl+C to stop)" if forever else ""))
 
             sent = 0
-            while sent < count:
-                n = min(batch, count - sent)
+            while forever or sent < count:
+                n = batch if forever else min(batch, count - sent)
                 if scenario == "all_io":
                     records = [maximal_record(codec, sent + i) for i in range(n)]
                 else:
@@ -636,6 +638,10 @@ def run_device(host: str, port: int, imei: str, count: int, codec: int,
                 sent += n
                 if delay:
                     time.sleep(delay)
+    except KeyboardInterrupt:
+        if verbose:
+            print(f"\n[{imei}] stopped after {sent} record(s)")
+        return ok
     except OSError as exc:
         print(f"[{imei}] socket error: {exc}", file=sys.stderr)
         return False
@@ -782,6 +788,8 @@ def main() -> int:
     ap.add_argument("--imei", default="356307042441013")
     ap.add_argument("--devices", type=int, default=1)
     ap.add_argument("--count", type=int, default=20, help="records per device")
+    ap.add_argument("--forever", action="store_true",
+                    help="ignore --count and send until interrupted (Ctrl+C)")
     ap.add_argument("--batch", type=int, default=1, help="records per packet")
     ap.add_argument("--codec", type=int, default=8, choices=[8, 142, 16],
                     help="8, 142 (0x8E) or 16 (0x10)")
@@ -809,7 +817,8 @@ def main() -> int:
 
     if args.devices == 1:
         ok = run_device(args.host, args.port, args.imei, args.count,
-                        codec, args.batch, args.delay, args.scenario)
+                        codec, args.batch, args.delay, args.scenario,
+                        forever=args.forever)
         return 0 if ok else 1
 
     results: list[bool] = []
@@ -818,7 +827,8 @@ def main() -> int:
     def worker(idx: int):
         imei = str(int(args.imei) + idx)
         ok = run_device(args.host, args.port, imei, args.count, codec,
-                        args.batch, args.delay, args.scenario, verbose=False)
+                        args.batch, args.delay, args.scenario, verbose=False,
+                        forever=args.forever)
         with lock:
             results.append(ok)
 
@@ -827,8 +837,16 @@ def main() -> int:
     start = time.time()
     for t in threads:
         t.start()
-    for t in threads:
-        t.join()
+    try:
+        for t in threads:
+            # threads are daemon=True, so a plain join() would still let
+            # Ctrl+C interrupt the process; poll so this loop actually
+            # wakes up to catch KeyboardInterrupt instead of blocking
+            # indefinitely inside a single join() call.
+            while t.is_alive():
+                t.join(timeout=0.5)
+    except KeyboardInterrupt:
+        print("\nstopping...", file=sys.stderr)
     elapsed = time.time() - start
 
     good = sum(results)
