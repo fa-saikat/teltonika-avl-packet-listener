@@ -1,0 +1,120 @@
+{
+  "_comment": [
+    "IO element definitions for Teltonika FMB-series devices.",
+    "",
+    "THIS FILE IS INTENTIONALLY INCOMPLETE. It contains only the AVL ids I",
+    "was confident enough to write down. The FMB920 publishes a few hundred.",
+    "Before you rely on this in production, open the Teltonika wiki page for",
+    "your exact model, find the 'AVL ID' table, and transcribe it.",
+    "",
+    "Unlisted ids still decode fine. They come out with name null and the",
+    "raw integer as the value, so nothing is lost, it is just unlabelled.",
+    "",
+    "Each entry carries a 'confidence' field:",
+    "  verified = byte width confirmed against a real Codec 8 packet",
+    "  high     = widely documented",
+    "  med      = plausible, verify against the wiki before trusting",
+    "",
+    "Schema per entry:",
+    "  name        display name",
+    "  unit        optional, appended to the decoded value",
+    "  multiplier  optional, raw is multiplied by this to get value",
+    "  signed      optional, treat the raw bytes as two's complement",
+    "  enum        optional, maps raw value to a state string",
+    "  confidence  documentation only, the parser ignores it"
+  ],
+
+  "io_elements": {
+    "1":   { "name": "Digital Input 1", "confidence": "verified",
+             "enum": { "0": "low", "1": "high" } },
+    "2":   { "name": "Digital Input 2", "confidence": "high",
+             "enum": { "0": "low", "1": "high" } },
+    "3":   { "name": "Digital Input 3", "confidence": "high",
+             "enum": { "0": "low", "1": "high" } },
+
+    "9":   { "name": "Analog Input 1", "unit": "V", "multiplier": 0.001,
+             "confidence": "high" },
+    "10":  { "name": "Analog Input 2", "unit": "V", "multiplier": 0.001,
+             "confidence": "med" },
+
+    "16":  { "name": "Total Odometer", "unit": "m", "confidence": "high" },
+    "21":  { "name": "GSM Signal", "confidence": "verified" },
+    "24":  { "name": "GNSS Speed", "unit": "km/h", "confidence": "high" },
+
+    "66":  { "name": "External Voltage", "unit": "V", "multiplier": 0.001,
+             "confidence": "verified" },
+    "67":  { "name": "Battery Voltage", "unit": "V", "multiplier": 0.001,
+             "confidence": "high" },
+    "68":  { "name": "Battery Current", "unit": "mA", "confidence": "high" },
+    "69":  { "name": "GNSS Status", "confidence": "high",
+             "enum": {
+               "0": "gnss_off",
+               "1": "gnss_on_with_fix",
+               "2": "gnss_on_without_fix",
+               "3": "gnss_sleep"
+             } },
+
+    "78":  { "name": "iButton ID", "confidence": "verified" },
+
+    "80":  { "name": "Data Mode", "confidence": "high",
+             "enum": {
+               "0": "home_on_stop",
+               "1": "home_on_moving",
+               "2": "roaming_on_stop",
+               "3": "roaming_on_moving",
+               "4": "unknown_on_stop",
+               "5": "unknown_on_moving"
+             } },
+
+    "113": { "name": "Battery Level", "unit": "%", "confidence": "high" },
+
+    "179": { "name": "Digital Output 1", "confidence": "high",
+             "enum": { "0": "off", "1": "on" } },
+    "180": { "name": "Digital Output 2", "confidence": "high",
+             "enum": { "0": "off", "1": "on" } },
+    "181": { "name": "GNSS PDOP", "multiplier": 0.1, "confidence": "med" },
+    "182": { "name": "GNSS HDOP", "multiplier": 0.1, "confidence": "med" },
+
+    "199": { "name": "Trip Odometer", "unit": "m", "confidence": "high" },
+    "200": { "name": "Sleep Mode", "confidence": "high",
+             "enum": {
+               "0": "no_sleep",
+               "1": "gps_sleep",
+               "2": "deep_sleep",
+               "3": "online_deep_sleep",
+               "4": "ultra_deep_sleep"
+             } },
+
+    "205": { "name": "GSM Cell ID", "confidence": "med" },
+    "206": { "name": "GSM Area Code", "confidence": "med" },
+
+    "239": { "name": "Ignition", "confidence": "high",
+             "enum": { "0": "off", "1": "on" } },
+    "240": { "name": "Movement", "confidence": "high",
+             "enum": { "0": "stopped", "1": "moving" } },
+    "241": { "name": "Active GSM Operator", "confidence": "verified" },
+
+    "246": { "name": "Towing Detection", "confidence": "med",
+             "enum": { "0": "inactive", "1": "active" } },
+    "247": { "name": "Crash Detection", "confidence": "med" },
+    "248": { "name": "Immobilizer", "confidence": "med" },
+    "249": { "name": "Jamming", "confidence": "med",
+             "enum": { "0": "inactive", "1": "active" } },
+    "250": { "name": "Trip", "confidence": "high",
+             "enum": { "0": "trip_end", "1": "trip_start" } },
+    "251": { "name": "Idling", "confidence": "high",
+             "enum": { "0": "moving", "1": "idling" } },
+    "252": { "name": "Unplug", "confidence": "med",
+             "enum": { "0": "inactive", "1": "active" } },
+    "253": { "name": "Green Driving Type", "confidence": "high",
+             "enum": {
+               "1": "harsh_acceleration",
+               "2": "harsh_braking",
+               "3": "harsh_cornering"
+             } },
+    "254": { "name": "Green Driving Value", "confidence": "med" },
+    "255": { "name": "Over Speeding", "unit": "km/h", "confidence": "high" },
+
+    "256": { "name": "VIN", "confidence": "med" }
+  }
+}
